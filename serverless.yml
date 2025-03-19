@@ -1,0 +1,78 @@
+service: products
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: us-east-1
+  # environment:
+  #   RDS_HOST: ${ssm:/products-api/RDS_HOST}
+  #   RDS_USER: ${ssm:/products-api/RDS_USER}
+  #   RDS_PASSWORD: ${ssm:/products-api/RDS_PASSWORD}
+  #   RDS_DATABASE: ${ssm:/products-api/RDS_DATABASE}
+  #   RDS_PORT: ${ssm:/products-api/RDS_PORT}
+  #   AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+
+functions:
+  createProduct:
+    handler: handler.createProduct
+    events:
+      - http:
+          path: products
+          method: post
+
+  updateProduct:
+    handler: handler.updateProduct
+    events:
+      - http:
+          path: products/{id}
+          method: put
+
+  deleteProduct:
+    handler: handler.deleteProduct
+    events:
+      - http:
+          path: products/{id}
+          method: delete
+
+  getAllProducts:
+    handler: handler.getAllProducts
+    events:
+      - http:
+          path: products
+          method: get
+
+plugins:
+  - serverless-iam-roles-per-function
+  - serverless-offline
+
+resources:
+  Resources:
+    NotesDB:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        DBInstanceIdentifier: notes-db
+        Engine: postgres
+        EngineVersion: "13.7"
+        DBInstanceClass: db.t3.micro
+        AllocatedStorage: 20
+        StorageType: gp2
+        PubliclyAccessible: false
+        # MasterUsername: !Sub "${ssm:/notes-api/RDS_USER}"
+        # MasterUserPassword: !Sub "${ssm:/notes-api/RDS_PASSWORD}"
+        VPCSecurityGroups:
+          - sg-xxxxxxxxxxxxxxxxx # Replace with your actual security group ID
+        DBSubnetGroupName: notes-db-subnet-group # Ensure this exists in your AWS setup
+        MultiAZ: false
+        BackupRetentionPeriod: 7
+        DeletionProtection: false
+
+    # NotesDBSecret:
+    #   Type: AWS::SecretsManager::Secret
+    #   Properties:
+    #     Name: notes-db-credentials
+    #     SecretString: !Sub |
+    #       {
+    #         "username": "${ssm:/notes-api/RDS_USER}",
+    #         "password": "${ssm:/notes-api/RDS_PASSWORD}"
+    #       }
