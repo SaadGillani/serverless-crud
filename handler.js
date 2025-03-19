@@ -52,12 +52,18 @@ module.exports.createProduct = async (event, context, cb) => {
 module.exports.updateProduct = async (event, context, cb) => {
   context.callbackWaitsForEmptyEventLoop = false;
   try {
+    const client = await pool.connect();
+
+    if (!(await isAdmin(client, event.headers))) {
+      throw new Error("Unauthorised");
+    }
+
     const id = event.pathParameters.id;
     const data = JSON.parse(event.body);
     const sql =
       "UPDATE products SET name = $1, price = $2, stock = $3 WHERE id = $4";
     const values = [data.name, data.price, data.stock, id];
-    const client = await pool.connect();
+
     const result = await client.query(sql, values);
     client.release();
     if (result.rowCount === 0) {
@@ -73,9 +79,15 @@ module.exports.updateProduct = async (event, context, cb) => {
 module.exports.deleteProduct = async (event, context, cb) => {
   context.callbackWaitsForEmptyEventLoop = false;
   try {
+    const client = await pool.connect();
+
+    if (!(await isAdmin(client, event.headers))) {
+      throw new Error("Unauthorised");
+    }
+
     const id = event.pathParameters.id;
     const sql = "DELETE FROM products WHERE id = $1";
-    const client = await pool.connect();
+
     const result = await client.query(sql, [id]);
     client.release();
     if (result.rowCount === 0) {
