@@ -20,6 +20,13 @@ functions:
       - http:
           path: products
           method: post
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - rds-db:connect
+          # - secretsmanager:GetSecretValue
+          # - ssm:GetParameter
+        Resource: "*"
 
   updateProduct:
     handler: handler.updateProduct
@@ -27,6 +34,11 @@ functions:
       - http:
           path: products/{id}
           method: put
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - rds-db:connect
+        Resource: "*"
 
   deleteProduct:
     handler: handler.deleteProduct
@@ -34,6 +46,11 @@ functions:
       - http:
           path: products/{id}
           method: delete
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - rds-db:connect
+        Resource: "*"
 
   getAllProducts:
     handler: handler.getAllProducts
@@ -41,6 +58,11 @@ functions:
       - http:
           path: products
           method: get
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - rds-db:connect
+        Resource: "*"
 
 plugins:
   - serverless-iam-roles-per-function
@@ -48,31 +70,31 @@ plugins:
 
 resources:
   Resources:
-    NotesDB:
+    PostgresDB:
       Type: AWS::RDS::DBInstance
       Properties:
-        DBInstanceIdentifier: notes-db
+        DBInstanceIdentifier: postgres-db
         Engine: postgres
         EngineVersion: "13.7"
         DBInstanceClass: db.t3.micro
         AllocatedStorage: 20
         StorageType: gp2
         PubliclyAccessible: false
-        # MasterUsername: !Sub "${ssm:/notes-api/RDS_USER}"
-        # MasterUserPassword: !Sub "${ssm:/notes-api/RDS_PASSWORD}"
+        MasterUsername: postgres #!Sub "${ssm:/postgres-api/RDS_USER}"
+        MasterUserPassword: postgres #!Sub "${ssm:/postgres-api/RDS_PASSWORD}"
         VPCSecurityGroups:
           - sg-xxxxxxxxxxxxxxxxx # Replace with your actual security group ID
-        DBSubnetGroupName: notes-db-subnet-group # Ensure this exists in your AWS setup
+        DBSubnetGroupName: postgres-db-subnet-group # Ensure this exists in your AWS setup
         MultiAZ: false
         BackupRetentionPeriod: 7
         DeletionProtection: false
 
-    # NotesDBSecret:
+    # DBSecret:
     #   Type: AWS::SecretsManager::Secret
     #   Properties:
-    #     Name: notes-db-credentials
+    #     Name: db-credentials
     #     SecretString: !Sub |
     #       {
-    #         "username": "${ssm:/notes-api/RDS_USER}",
-    #         "password": "${ssm:/notes-api/RDS_PASSWORD}"
+    #         "username": "${ssm:/products-api/RDS_USER}",
+    #         "password": "${ssm:/products-api/RDS_PASSWORD}"
     #       }
