@@ -14,12 +14,19 @@ provider:
   #   AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
 
 functions:
+  # authorizer:
+  #   handler: authorizer.auth
+
   createProduct:
     handler: handler.createProduct
     events:
       - http:
           path: products
           method: post
+          # authorizer:
+          #   name: authorizer
+          #   type: TOKEN
+          #   identitySource: method.request.header.Authorization
     iamRoleStatements:
       - Effect: Allow
         Action:
