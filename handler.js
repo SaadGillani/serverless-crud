@@ -19,13 +19,28 @@ const send = (statusCode, message) => {
   };
 };
 
+const isAdmin = async (client, headers) => {
+  const userId = headers["user-id"];
+
+  const sql = "SELECT role FROM users WHERE id = $1";
+  const data = await client.query(sql, [userId]);
+
+  return data?.rows[0]?.role === "admin";
+};
+
 module.exports.createProduct = async (event, context, cb) => {
   context.callbackWaitsForEmptyEventLoop = false;
   try {
+    const client = await pool.connect();
+
+    if (!(await isAdmin(client, event.headers))) {
+      throw new Error("Unauthorised");
+    }
+
     const data = JSON.parse(event.body);
     const sql = "INSERT INTO products (name, price, stock) VALUES ($1, $2, $3)";
     const values = [data.name, data.price, data.stock];
-    const client = await pool.connect();
+
     await client.query(sql, values);
     client.release();
     cb(null, send(200, data));
